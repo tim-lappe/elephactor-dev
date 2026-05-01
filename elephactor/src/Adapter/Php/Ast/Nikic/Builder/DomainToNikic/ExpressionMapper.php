@@ -442,9 +442,12 @@ final class ExpressionMapper
             ? $this->buildExpression($callable)
             : $this->valueMapper->buildQualifiedName($callable->qualifiedName());
 
-        return new Expr\FuncCall(
-            $name,
-            $this->buildArguments($expression->arguments()),
+        return $this->reuseAdapterNode(
+            $expression,
+            new Expr\FuncCall(
+                $name,
+                $this->buildArguments($expression->arguments()),
+            ),
         );
     }
 
@@ -456,17 +459,23 @@ final class ExpressionMapper
             : $this->buildExpression($method);
 
         if ($expression->isNullsafe()) {
-            return new Expr\NullsafeMethodCall(
-                $this->buildExpression($expression->object()),
-                $name,
-                $this->buildArguments($expression->arguments()),
+            return $this->reuseAdapterNode(
+                $expression,
+                new Expr\NullsafeMethodCall(
+                    $this->buildExpression($expression->object()),
+                    $name,
+                    $this->buildArguments($expression->arguments()),
+                ),
             );
         }
 
-        return new Expr\MethodCall(
-            $this->buildExpression($expression->object()),
-            $name,
-            $this->buildArguments($expression->arguments()),
+        return $this->reuseAdapterNode(
+            $expression,
+            new Expr\MethodCall(
+                $this->buildExpression($expression->object()),
+                $name,
+                $this->buildArguments($expression->arguments()),
+            ),
         );
     }
 
@@ -496,9 +505,12 @@ final class ExpressionMapper
             ? $this->buildExpression($class)
             : $this->valueMapper->buildQualifiedName($class->qualifiedName());
 
-        return new Expr\New_(
-            $classExpr,
-            $this->buildArguments($expression->arguments()),
+        return $this->reuseAdapterNode(
+            $expression,
+            new Expr\New_(
+                $classExpr,
+                $this->buildArguments($expression->arguments()),
+            ),
         );
     }
 
@@ -710,14 +722,17 @@ final class ExpressionMapper
 
     private function buildArrowFunction(Ast\Expression\ArrowFunctionExpressionNode $expression): Expr
     {
-        return new Expr\ArrowFunction([
-            'static' => $expression->isStatic(),
-            'byRef' => $expression->returnsByReference(),
-            'params' => $this->buildParameters($expression->parameters()),
-            'returnType' => $this->typeMapper->buildType($expression->returnType()),
-            'expr' => $this->buildExpression($expression->body()),
-            'attrGroups' => $this->valueMapper->buildAttributeGroups($expression->attributes()),
-        ]);
+        return $this->reuseAdapterNode(
+            $expression,
+            new Expr\ArrowFunction([
+                'static' => $expression->isStatic(),
+                'byRef' => $expression->returnsByReference(),
+                'params' => $this->buildParameters($expression->parameters()),
+                'returnType' => $this->typeMapper->buildType($expression->returnType()),
+                'expr' => $this->buildExpression($expression->body()),
+                'attrGroups' => $this->valueMapper->buildAttributeGroups($expression->attributes()),
+            ]),
+        );
     }
 
     private function buildMatchExpression(Ast\Expression\MatchExpressionNode $expression): Expr

@@ -39,6 +39,26 @@ final class VisitorContext
         return $value;
     }
 
+    /**
+     * @template T of object
+     * @param class-string<T> $itemType
+     * @return list<T>
+     */
+    public function getArrayOf(string $key, string $itemType): array
+    {
+        $value = $this->context[$key] ?? [];
+        if (!is_array($value)) {
+            return [];
+        }
+        $result = [];
+        foreach ($value as $item) {
+            if ($item instanceof $itemType) {
+                $result[] = $item;
+            }
+        }
+        return $result;
+    }
+
     public function getBoolean(string $key): bool
     {
         $value = $this->context[$key] ?? null;

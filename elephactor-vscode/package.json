@@ -34,7 +34,17 @@
         "command": "vscode-elephactor.installElephactor",
         "title": "Elephactor: Install Elephactor"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Elephactor",
+      "properties": {
+        "vscode-elephactor.binaryPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the Elephactor binary. Relative paths are resolved from the Composer project root."
+        }
+      }
+    }
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",

@@ -15,6 +15,171 @@ use TimLappe\Elephactor\Domain\Workspace\Model\Filesystem\File;
 
 final class MoveClassDependencyImportTest extends ElephactorTestCase
 {
+    public function testKeepsImportedDependenciesAndGlobalFunctionsWhenMoved(): void
+    {
+        $applicationNamespace = $this->sourceDirectory
+            ->createOrGetDirecotry('Printer')
+            ->createOrGetDirecotry('Application');
+
+        $applicationNamespace
+            ->createOrGetDirecotry('Dto')
+            ->createFile('ResponseDto.php', <<<'PHP'
+            <?php
+
+            namespace VirtualTestNamespace\Printer\Application\Dto;
+
+            final readonly class ResponseDto
+            {
+                public function __construct(public string $name)
+                {
+                }
+            }
+            PHP);
+
+        $this->sourceDirectory
+            ->createOrGetDirecotry('Printer')
+            ->createOrGetDirecotry('Domain')
+            ->createOrGetDirecotry('Entity')
+            ->createFile('PrintedLabel.php', <<<'PHP'
+            <?php
+
+            namespace VirtualTestNamespace\Printer\Domain\Entity;
+
+            final class PrintedLabel
+            {
+                public function name(): string
+                {
+                    return 'label';
+                }
+            }
+            PHP);
+
+        $this->sourceDirectory
+            ->createOrGetDirecotry('Printer')
+            ->createOrGetDirecotry('Domain')
+            ->createOrGetDirecotry('Exception')
+            ->createFile('JobFailedException.php', <<<'PHP'
+            <?php
+
+            namespace VirtualTestNamespace\Printer\Domain\Exception;
+
+            final class JobFailedException extends \RuntimeException
+            {
+            }
+            PHP);
+
+        $this->sourceDirectory
+            ->createOrGetDirecotry('Printer')
+            ->createOrGetDirecotry('Domain')
+            ->createOrGetDirecotry('Repository')
+            ->createFile('LabelRepository.php', <<<'PHP'
+            <?php
+
+            namespace VirtualTestNamespace\Printer\Domain\Repository;
+
+            final class LabelRepository
+            {
+            }
+            PHP);
+
+        $this->sourceDirectory
+            ->createOrGetDirecotry('Framework')
+            ->createOrGetDirecotry('Exception')
+            ->createFile('BadRequestException.php', <<<'PHP'
+            <?php
+
+            namespace VirtualTestNamespace\Framework\Exception;
+
+            final class BadRequestException extends \RuntimeException
+            {
+            }
+            PHP);
+
+        $applicationNamespace->createFile('MovedApplicationService.php', <<<'PHP'
+        <?php
+
+        namespace VirtualTestNamespace\Printer\Application;
+
+        use VirtualTestNamespace\Framework\Exception\BadRequestException;
+        use VirtualTestNamespace\Printer\Application\Dto\ResponseDto;
+        use VirtualTestNamespace\Printer\Domain\Entity\PrintedLabel;
+        use VirtualTestNamespace\Printer\Domain\Exception\JobFailedException;
+        use VirtualTestNamespace\Printer\Domain\Repository\LabelRepository;
+
+        final readonly class MovedApplicationService
+        {
+            public function __construct(private LabelRepository $labels)
+            {
+            }
+
+            /**
+             * @return list<ResponseDto>
+             */
+            public function listLabels(): array
+            {
+                return array_map(
+                    fn (PrintedLabel $label): ResponseDto => new ResponseDto($label->name()),
+                    $this->labels->recent(),
+                );
+            }
+
+            public function resend(): void
+            {
+                try {
+                    $this->labels->resend();
+                } catch (JobFailedException $e) {
+                    throw new BadRequestException($e->getMessage(), $e);
+                }
+            }
+        }
+        PHP);
+
+        $targetNamespace = $applicationNamespace->createOrGetDirecotry('Dto');
+
+        $this->workspace->reloadIndices();
+
+        $this->moveClass('MovedApplicationService', $targetNamespace);
+
+        $movedFile = $this->findFileIn($targetNamespace, 'MovedApplicationService.php');
+        self::assertNotNull($movedFile);
+
+        $this->codeMatches($movedFile->content(), <<<'PHP'
+        <?php
+
+        namespace VirtualTestNamespace\Printer\Application\Dto;
+
+        use VirtualTestNamespace\Framework\Exception\BadRequestException;
+        use VirtualTestNamespace\Printer\Application\Dto\ResponseDto;
+        use VirtualTestNamespace\Printer\Domain\Entity\PrintedLabel;
+        use VirtualTestNamespace\Printer\Domain\Exception\JobFailedException;
+        use VirtualTestNamespace\Printer\Domain\Repository\LabelRepository;
+
+        final readonly class MovedApplicationService
+        {
+            public function __construct(private LabelRepository $labels)
+            {
+            }
+            /**
+             * @return list<ResponseDto>
+             */
+
+            public function listLabels(): array
+            {
+                return array_map(fn(PrintedLabel $label): ResponseDto => new ResponseDto($label->name()), $this->labels->recent());
+            }
+
+            public function resend(): void
+            {
+                try {
+                    $this->labels->resend();
+                } catch (JobFailedException $e) {
+                    throw new BadRequestException($e->getMessage(), $e);
+                }
+            }
+        }
+        PHP);
+    }
+
     public function testKeepsReferencesToSameNamespaceDependencies(): void
     {
         $sharedNamespace = $this->sourceDirectory
