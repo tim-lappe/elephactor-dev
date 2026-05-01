@@ -43,6 +43,10 @@ final class RenameQualifiedNameIdentifierTransformer extends AbsractNodeTransfor
                 return;
             }
 
+            if ($this->newIdentifier->equals($oldIdentifier)) {
+                return;
+            }
+
             if ($node->qualifiedName()->lastPart()->equals($oldIdentifier)) {
                 $newQualifiedName = $node->qualifiedName()->changeLastPart($this->newIdentifier);
                 $this->refactorings->add(new QualifiedNameChanger($node, $newQualifiedName));

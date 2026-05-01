@@ -268,13 +268,23 @@ final class MoveClassDependencyImportTest extends ElephactorTestCase
             ->createOrGetDirecotry('Domain')
             ->createOrGetDirecotry('Entity');
 
-        $entityNamespace->createFile('CatalogItemImage.php', <<<'PHP'
+        $catalogItemImageFile = $entityNamespace->createFile('CatalogItemImage.php', <<<'PHP'
         <?php
 
         namespace VirtualTestNamespace\Catalog\Domain\Entity;
 
+        use Doctrine\ORM\Mapping as ORM;
+
+        #[ORM\Entity]
         final class CatalogItemImage
         {
+            #[ORM\OneToOne(targetEntity: CatalogItem::class, inversedBy: 'catalogItemImage')]
+            private CatalogItem $catalogItem;
+
+            public function __construct(CatalogItem $catalogItem)
+            {
+                $this->catalogItem = $catalogItem;
+            }
         }
         PHP);
 
@@ -329,6 +339,26 @@ final class MoveClassDependencyImportTest extends ElephactorTestCase
 
             #[ORM\OneToOne(targetEntity: \VirtualTestNamespace\Catalog\Domain\Entity\CatalogItemImage::class)]
             private ?\VirtualTestNamespace\Catalog\Domain\Entity\CatalogItemImage $catalogItemImage = null;
+        }
+        PHP);
+
+        $this->codeMatches($catalogItemImageFile->content(), <<<'PHP'
+        <?php
+
+        namespace VirtualTestNamespace\Catalog\Domain\Entity;
+
+        use Doctrine\ORM\Mapping as ORM;
+
+        #[ORM\Entity]
+        final class CatalogItemImage
+        {
+            #[ORM\OneToOne(targetEntity: \VirtualTestNamespace\Catalog\Application\Controller\CatalogItem::class, inversedBy: 'catalogItemImage')]
+            private \VirtualTestNamespace\Catalog\Application\Controller\CatalogItem $catalogItem;
+
+            public function __construct(\VirtualTestNamespace\Catalog\Application\Controller\CatalogItem $catalogItem)
+            {
+                $this->catalogItem = $catalogItem;
+            }
         }
         PHP);
     }

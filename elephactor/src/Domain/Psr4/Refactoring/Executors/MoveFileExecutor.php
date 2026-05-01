@@ -6,6 +6,7 @@ namespace TimLappe\Elephactor\Domain\Psr4\Refactoring\Executors;
 
 use TimLappe\Elephactor\Domain\Php\AST\Transformer\RenameImportTransformer;
 use TimLappe\Elephactor\Domain\Php\AST\Transformer\NodeTransformationExecutor;
+use TimLappe\Elephactor\Domain\Php\AST\Transformer\MoveImplicitSameNamespaceReferenceTransformer;
 use TimLappe\Elephactor\Domain\Php\Refactoring\Commands\MoveFile;
 use TimLappe\Elephactor\Domain\Php\Refactoring\RefactoringCommand;
 use TimLappe\Elephactor\Domain\Php\Refactoring\RefactoringExecutor;
@@ -58,6 +59,7 @@ final class MoveFileExecutor implements RefactoringExecutor
             $semanticFileNode = $phpFile->fileNode();
             $semanticNodeTraverser = new NodeTransformationExecutor();
             $semanticNodeTraverser->addTransformer(new RenameImportTransformer($oldFullyQualifiedName, $newFullyQualifiedName));
+            $semanticNodeTraverser->addTransformer(new MoveImplicitSameNamespaceReferenceTransformer($oldFullyQualifiedName, $newFullyQualifiedNameFq));
             $semanticNodeTraverser->addTransformer(new RenameQualifiedNameIdentifierTransformer($oldFullyQualifiedName, $newFullyQualifiedName->lastPart(), $newFullyQualifiedNameFq));
             $refactoringResult = $semanticNodeTraverser->apply($semanticFileNode);
 
