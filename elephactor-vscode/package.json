@@ -3,7 +3,7 @@
   "displayName": "Elephactor",
   "description": "Developer playground for the Elephactor VS Code tooling.",
   "version": "0.0.1",
-  "publisher": "elephactor",
+  "publisher": "TimLappe",
   "type": "commonjs",
   "main": "./dist/extension.js",
   "scripts": {
@@ -19,6 +19,11 @@
     "elephactor"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tim-lappe/elephactor-dev.git",
+    "directory": "elephactor-vscode"
+  },
   "engines": {
     "vscode": "^1.95.0"
   },
@@ -50,7 +55,7 @@
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^18.19.130",
-    "@types/vscode": "^1.106.0",
+    "@types/vscode": "1.95.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.0",

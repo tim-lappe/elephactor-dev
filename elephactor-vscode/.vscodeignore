@@ -2,8 +2,12 @@
 .vscode-test/**
 node_modules/**
 src/**
+dist/test/**
+*.vsix
+.vscode-test.mjs
 .gitignore
 .vscodeignore
+README.dist.md
 tsconfig.json
 vsc-extension-quickstart.md
 **/.DS_Store
