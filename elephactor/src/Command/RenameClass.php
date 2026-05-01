@@ -24,6 +24,7 @@ class RenameClass extends Command
         $this->setName('class:rename')
             ->setDescription('Rename a class')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Dry run the command')
+            ->addOption('skip-file-rename', null, InputOption::VALUE_NONE, 'Skip renaming the file')
             ->addArgument('old-name', InputArgument::REQUIRED, 'The old name of the class')
             ->addArgument('new-name', InputArgument::REQUIRED, 'The new name of the class');
     }
@@ -33,6 +34,11 @@ class RenameClass extends Command
         $dryRun = $input->getOption('dry-run');
         if (!is_bool($dryRun)) {
             throw new \InvalidArgumentException('Dry run must be a boolean');
+        }
+
+        $skipFileRename = $input->getOption('skip-file-rename');
+        if (!is_bool($skipFileRename)) {
+            throw new \InvalidArgumentException('Skip file rename must be a boolean');
         }
 
         $io = new SymfonyStyle($input, $output);
@@ -62,7 +68,7 @@ class RenameClass extends Command
         $io->info(sprintf('Found class %s', $class->classLikeNode()->name()));
 
         $refactoringExecutor = $application->refactoringExecutor();
-        $report = $refactoringExecutor->handle(new ClassRename($class, new Identifier($newName)), $dryRun);
+        $report = $refactoringExecutor->handle(new ClassRename($class, new Identifier($newName), !$skipFileRename), $dryRun);
         $reportPrinter = new ReportPrinter($input, $output);
         $reportPrinter->print($report);
 

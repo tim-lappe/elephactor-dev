@@ -61,7 +61,7 @@ final class ClassRenameExecutor implements RefactoringExecutor
             }
         }
 
-        if (!$dryRun) {
+        if (!$dryRun && $command->renameFile()) {
             $command->phpClass()->file()->handle()->rename($command->newName()->value() . '.php');
             $this->phpFilePersister->persist($command->phpClass()->file());
         }

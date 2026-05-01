@@ -43,6 +43,27 @@ class BasicClassRenameTest extends ElephactorTestCase
         PHP);
     }
 
+    public function testCanSkipFileRename(): void
+    {
+        $class = $this->workspace->classLikeIndex()->find(new ClassNameCriteria(new Identifier('OldClass')))->first();
+        if ($class === null) {
+            self::fail('Class OldClass not found in workspace');
+        }
+
+        $this->application
+            ->refactoringExecutor()
+            ->handle(new ClassRename($class, new Identifier('NewClass'), false));
+
+        self::assertEquals('OldClass.php', $this->oldClass->name());
+        $this->codeMatches($this->oldClass->content(), <<<'PHP'
+        <?php
+
+        class NewClass
+        {
+        }
+        PHP);
+    }
+
     private function renameClass(string $oldName, string $newName): void
     {
         $class = $this->workspace->classLikeIndex()->find(new ClassNameCriteria(new Identifier($oldName)))->first();

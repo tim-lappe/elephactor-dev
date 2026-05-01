@@ -13,6 +13,7 @@ final class ClassRename implements RefactoringCommand
     public function __construct(
         private readonly PhpClassLike $class,
         private readonly Identifier $newClassIdentifier,
+        private readonly bool $renameFile = true,
     ) {
     }
 
@@ -24,5 +25,10 @@ final class ClassRename implements RefactoringCommand
     public function newName(): Identifier
     {
         return $this->newClassIdentifier;
+    }
+
+    public function renameFile(): bool
+    {
+        return $this->renameFile;
     }
 }

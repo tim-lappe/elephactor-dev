@@ -26,6 +26,7 @@ class MoveClass extends Command
         $this->setName('class:move')
             ->setDescription('Move a class')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Dry run the command')
+            ->addOption('skip-file-move', null, InputOption::VALUE_NONE, 'Skip moving the file')
             ->addArgument('class', InputArgument::REQUIRED, 'The path or class name of the class to move')
             ->addArgument('target-directory', InputArgument::REQUIRED, 'The target directory of the class');
     }
@@ -37,6 +38,11 @@ class MoveClass extends Command
             throw new \InvalidArgumentException('Dry run must be a boolean');
         }
 
+        $skipFileMove = $input->getOption('skip-file-move');
+        if (!is_bool($skipFileMove)) {
+            throw new \InvalidArgumentException('Skip file move must be a boolean');
+        }
+
         $classSource = $input->getArgument('class');
         $targetDirectoryStringPath = $input->getArgument('target-directory');
 
@@ -44,7 +50,6 @@ class MoveClass extends Command
             throw new \InvalidArgumentException('Class name and target directory must be strings');
         }
 
-        $targetDirectory = trim($targetDirectoryStringPath);
         $targetDirectory = new FsAbsolutePath($targetDirectoryStringPath);
 
         $output->writeln(sprintf('Moving class %s to directory %s', $classSource, $targetDirectory));
@@ -55,15 +60,12 @@ class MoveClass extends Command
         }
 
         $class = $application->workspace()->classLikeIndex()->find(new ClassFilePathCriteria(new FsAbsolutePath($classSource)))->first();
-        if ($class === null) {
-            throw new \RuntimeException(sprintf('Class %s not found in workspace', $classSource));
+        if ($class === null && Identifier::valid($classSource)) {
+            $class = $application->workspace()->classLikeIndex()->find(new ClassNameCriteria(new Identifier($classSource)))->first();
         }
 
-        if (Identifier::valid($classSource)) {
-            $class = $application->workspace()->classLikeIndex()->find(new ClassNameCriteria($classSource))->first();
-            if ($class === null) {
-                throw new \RuntimeException(sprintf('Class %s not found in workspace', $classSource));
-            }
+        if ($class === null) {
+            throw new \RuntimeException(sprintf('Class %s not found in workspace', $classSource));
         }
 
         $targetDirectory = $application->workspace()->workspaceDirectory()->find($targetDirectory);
@@ -72,7 +74,7 @@ class MoveClass extends Command
         }
 
         $refactoringExecutor = $application->refactoringExecutor();
-        $report = $refactoringExecutor->handle(new MoveFile($class->file(), $targetDirectory), $dryRun);
+        $report = $refactoringExecutor->handle(new MoveFile($class->file(), $targetDirectory, !$skipFileMove), $dryRun);
         $reportPrinter = new ReportPrinter($input, $output);
         $reportPrinter->print($report);
 

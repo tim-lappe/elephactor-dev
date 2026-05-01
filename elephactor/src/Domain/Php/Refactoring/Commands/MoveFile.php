@@ -13,6 +13,7 @@ final class MoveFile implements RefactoringCommand
     public function __construct(
         private readonly PhpFile $file,
         private readonly Directory $newDirectory,
+        private readonly bool $moveFile = true,
     ) {
     }
 
@@ -24,5 +25,10 @@ final class MoveFile implements RefactoringCommand
     public function newDirectory(): Directory
     {
         return $this->newDirectory;
+    }
+
+    public function moveFile(): bool
+    {
+        return $this->moveFile;
     }
 }

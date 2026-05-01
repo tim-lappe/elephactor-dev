@@ -67,4 +67,35 @@ final class BasicClassMovingTest extends ElephactorTestCase
         }
         PHP);
     }
+
+    public function testCanSkipFileMove(): void
+    {
+        $class = $this->workspace->classLikeIndex()->find(new ClassNameCriteria(new Identifier('FooClass')))->first();
+        if ($class === null) {
+            self::fail('Class FooClass not found in workspace.');
+        }
+
+        if (!$class instanceof Psr4ClassFile) {
+            self::fail('Class FooClass is not a Psr4ClassFile');
+        }
+
+        $this->application
+            ->refactoringExecutor()
+            ->handle(new MoveFile($class->file(), $this->targetDirectory, false));
+
+        $movedFile = $this->targetDirectory
+            ->childFiles()
+            ->first(fn (VirtualFile $file): bool => $file->name() === 'FooClass.php');
+
+        self::assertNull($movedFile, 'File should not be moved to target directory');
+        $this->codeMatches($class->file()->handle()->content(), <<<'PHP'
+        <?php
+
+        namespace VirtualTestNamespace\NewDirectory;
+
+        class FooClass
+        {
+        }
+        PHP);
+    }
 }

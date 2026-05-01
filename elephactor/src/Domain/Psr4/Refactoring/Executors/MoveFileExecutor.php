@@ -88,7 +88,10 @@ final class MoveFileExecutor implements RefactoringExecutor
         }
 
         if (!$dryRun) {
-            $classFile->file()->handle()->moveTo($command->newDirectory());
+            if ($command->moveFile()) {
+                $classFile->file()->handle()->moveTo($command->newDirectory());
+            }
+
             $this->phpFilePersister->persist($classFile->file());
         }
 
