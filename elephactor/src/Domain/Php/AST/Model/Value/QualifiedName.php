@@ -68,6 +68,11 @@ readonly class QualifiedName
         return $this->parts[count($this->parts) - 1];
     }
 
+    public function firstPart(): Identifier
+    {
+        return $this->parts[0];
+    }
+
     public function extend(Identifier $identifier): QualifiedName
     {
         return new QualifiedName([...$this->parts, $identifier]);

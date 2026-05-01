@@ -247,6 +247,92 @@ final class MoveClassDependencyImportTest extends ElephactorTestCase
         PHP);
     }
 
+    public function testKeepsAliasedNamespaceAttributeReferencesWhenMoved(): void
+    {
+        $this->sourceDirectory
+            ->createOrGetDirecotry('Catalog')
+            ->createOrGetDirecotry('Domain')
+            ->createOrGetDirecotry('Repository')
+            ->createFile('CatalogItemRepository.php', <<<'PHP'
+            <?php
+
+            namespace VirtualTestNamespace\Catalog\Domain\Repository;
+
+            final class CatalogItemRepository
+            {
+            }
+            PHP);
+
+        $entityNamespace = $this->sourceDirectory
+            ->createOrGetDirecotry('Catalog')
+            ->createOrGetDirecotry('Domain')
+            ->createOrGetDirecotry('Entity');
+
+        $entityNamespace->createFile('CatalogItemImage.php', <<<'PHP'
+        <?php
+
+        namespace VirtualTestNamespace\Catalog\Domain\Entity;
+
+        final class CatalogItemImage
+        {
+        }
+        PHP);
+
+        $entityNamespace->createFile('CatalogItem.php', <<<'PHP'
+        <?php
+
+        namespace VirtualTestNamespace\Catalog\Domain\Entity;
+
+        use Doctrine\ORM\Mapping as ORM;
+        use VirtualTestNamespace\Catalog\Domain\Repository\CatalogItemRepository;
+
+        #[ORM\Entity(repositoryClass: CatalogItemRepository::class)]
+        #[ORM\Table(name: 'item_type')]
+        final class CatalogItem
+        {
+            #[ORM\Id]
+            #[ORM\Column(type: 'catalog_item_id', unique: true)]
+            private string $catalogItemId;
+
+            #[ORM\OneToOne(targetEntity: CatalogItemImage::class)]
+            private ?CatalogItemImage $catalogItemImage = null;
+        }
+        PHP);
+
+        $targetNamespace = $this->sourceDirectory
+            ->createOrGetDirecotry('Catalog')
+            ->createOrGetDirecotry('Application')
+            ->createOrGetDirecotry('Controller');
+
+        $this->workspace->reloadIndices();
+
+        $this->moveClass('CatalogItem', $targetNamespace);
+
+        $movedFile = $this->findFileIn($targetNamespace, 'CatalogItem.php');
+        self::assertNotNull($movedFile);
+
+        $this->codeMatches($movedFile->content(), <<<'PHP'
+        <?php
+
+        namespace VirtualTestNamespace\Catalog\Application\Controller;
+
+        use Doctrine\ORM\Mapping as ORM;
+        use VirtualTestNamespace\Catalog\Domain\Repository\CatalogItemRepository;
+
+        #[ORM\Entity(repositoryClass: CatalogItemRepository::class)]
+        #[ORM\Table(name: 'item_type')]
+        final class CatalogItem
+        {
+            #[ORM\Id]
+            #[ORM\Column(type: 'catalog_item_id', unique: true)]
+            private string $catalogItemId;
+
+            #[ORM\OneToOne(targetEntity: \VirtualTestNamespace\Catalog\Domain\Entity\CatalogItemImage::class)]
+            private ?\VirtualTestNamespace\Catalog\Domain\Entity\CatalogItemImage $catalogItemImage = null;
+        }
+        PHP);
+    }
+
     private function moveClass(string $className, VirtualDirectory $targetDirectory): void
     {
         $class = $this->workspace->classLikeIndex()->find(new ClassNameCriteria(new Identifier($className)))->first();

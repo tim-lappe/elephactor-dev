@@ -58,7 +58,7 @@ final class ConvertImplicitToFullyQualifiedNameTransformer extends AbsractNodeTr
             }
 
             $identifiersImported = $context->getArrayOf('identifiersImported', Identifier::class);
-            if ($this->importsIdentifier($node->qualifiedName()->lastPart(), $identifiersImported)) {
+            if ($this->importsIdentifier($this->rootIdentifier($node), $identifiersImported)) {
                 return;
             }
 
@@ -93,6 +93,11 @@ final class ConvertImplicitToFullyQualifiedNameTransformer extends AbsractNodeTr
         }
 
         return false;
+    }
+
+    private function rootIdentifier(QualifiedNameNode $node): Identifier
+    {
+        return $node->qualifiedName()->firstPart();
     }
 
     private function addSkippedQualifiedName(VisitorContext $context, QualifiedNameNode $node): void
