@@ -1,0 +1,100 @@
+name: Elephactor CI and dist mirror
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: elephactor
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          coverage: none
+
+      - run: composer install --no-interaction --prefer-dist
+
+      - run: composer test
+
+      - run: composer phpstan
+
+  vscode:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: elephactor-vscode
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: elephactor-vscode/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run check
+
+  sync:
+    needs:
+      - php
+      - vscode
+    runs-on: ubuntu-latest
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.repository == 'tim-lappe/elephactor-dev' &&
+      github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone dist repository
+        env:
+          ELEPHACTOR_DIST_TOKEN: ${{ secrets.ELEPHACTOR_DIST_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ELEPHACTOR_DIST_TOKEN:-}" ]; then
+            echo "ELEPHACTOR_DIST_TOKEN is not set. Add a repository secret with push access to tim-lappe/elephactor."
+            exit 1
+          fi
+          git clone --depth 1 "https://x-access-token:${ELEPHACTOR_DIST_TOKEN}@github.com/tim-lappe/elephactor.git" dist-repo
+
+      - name: Rsync package files
+        run: |
+          set -euo pipefail
+          find dist-repo -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          rsync -av \
+            --exclude 'tests/' \
+            --exclude 'phpunit.xml' \
+            --exclude 'phpstan.neon' \
+            --exclude '.php-cs-fixer.php' \
+            --exclude 'coverage/' \
+            --exclude 'vendor/' \
+            elephactor/ dist-repo/
+
+      - name: Commit and push
+        env:
+          ELEPHACTOR_DIST_TOKEN: ${{ secrets.ELEPHACTOR_DIST_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd dist-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to sync."
+            exit 0
+          fi
+          git commit -m "Sync from tim-lappe/elephactor-dev@${GITHUB_SHA}"
+          git push "https://x-access-token:${ELEPHACTOR_DIST_TOKEN}@github.com/tim-lappe/elephactor.git" HEAD:main
