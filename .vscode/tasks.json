@@ -5,7 +5,7 @@
       "label": "compile extension",
       "type": "npm",
       "script": "compile",
-      "path": "vscode-elephactor",
+      "path": "elephactor-vscode",
       "problemMatcher": "$tsc",
       "group": "build"
     },
@@ -13,7 +13,7 @@
       "label": "watch extension",
       "type": "npm",
       "script": "watch",
-      "path": "vscode-elephactor",
+      "path": "elephactor-vscode",
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
       "presentation": {

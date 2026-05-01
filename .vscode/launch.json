@@ -7,10 +7,10 @@
       "request": "launch",
       "runtimeExecutable": "${execPath}",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/vscode-elephactor"
+        "--extensionDevelopmentPath=${workspaceFolder}/elephactor-vscode"
       ],
       "outFiles": [
-        "${workspaceFolder}/vscode-elephactor/dist/**/*.js"
+        "${workspaceFolder}/elephactor-vscode/dist/**/*.js"
       ],
       "preLaunchTask": "watch extension"
     },
@@ -20,11 +20,11 @@
       "request": "launch",
       "runtimeExecutable": "${execPath}",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/vscode-elephactor",
-        "--extensionTestsPath=${workspaceFolder}/vscode-elephactor/dist/test/suite/index.js"
+        "--extensionDevelopmentPath=${workspaceFolder}/elephactor-vscode",
+        "--extensionTestsPath=${workspaceFolder}/elephactor-vscode/dist/test/suite/index.js"
       ],
       "outFiles": [
-        "${workspaceFolder}/vscode-elephactor/dist/**/*.js"
+        "${workspaceFolder}/elephactor-vscode/dist/**/*.js"
       ],
       "preLaunchTask": "compile extension"
     }
