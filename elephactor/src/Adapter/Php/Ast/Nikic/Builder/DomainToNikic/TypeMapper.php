@@ -20,6 +20,8 @@ use TimLappe\Elephactor\Domain\Php\AST\Model\Value\QualifiedName;
 
 final class TypeMapper
 {
+    use AdapterNodeReuserTrait;
+
     public function buildType(?Ast\TypeNode $type): Identifier|Name|ComplexType|null
     {
         if ($type === null) {
@@ -32,15 +34,7 @@ final class TypeMapper
                 throw new \RuntimeException('Nullable type requires an inner named type');
             }
 
-            $node = $type->getAdapterNode();
-            if (!$node instanceof NullableType) {
-                $node = new NullableType($inner);
-            }
-
-            $node->type = $inner;
-            $type->setAdapterNode($node);
-
-            return $node;
+            return $this->reuseAdapterNode($type, new NullableType($inner));
         }
 
         if ($type instanceof UnionTypeNode) {
@@ -56,15 +50,7 @@ final class TypeMapper
                 $type->types(),
             );
 
-            $node = $type->getAdapterNode();
-            if (!$node instanceof UnionType) {
-                $node = new UnionType($types);
-            }
-
-            $node->types = $types;
-            $type->setAdapterNode($node);
-
-            return $node;
+            return $this->reuseAdapterNode($type, new UnionType($types));
         }
 
         if ($type instanceof Ast\Type\IntersectionTypeNode) {
@@ -80,52 +66,17 @@ final class TypeMapper
                 $type->types(),
             );
 
-            $node = $type->getAdapterNode();
-            if (!$node instanceof IntersectionType) {
-                $node = new IntersectionType($types);
-            }
-
-            $node->types = $types;
-            $type->setAdapterNode($node);
-
-            return $node;
+            return $this->reuseAdapterNode($type, new IntersectionType($types));
         }
 
         if ($type instanceof NamedTypeNode) {
             $built = $this->buildQualifiedName($type->name()->qualifiedName());
-            $node = $type->getAdapterNode();
 
-            if ($node instanceof Name) {
-                if ($node::class === $built::class) {
-                    $node->name = $built->name;
-                } else {
-                    $comments = $node->getComments();
-                    if ($comments !== []) {
-                        $built->setAttribute('comments', $comments);
-                    }
-                    $node = $built;
-                }
-            } elseif ($node instanceof Identifier) {
-                $node->name = $built->toString();
-            } else {
-                $node = $built;
-            }
-
-            $type->setAdapterNode($node);
-
-            return $node;
+            return $this->reuseAdapterNode($type, $built);
         }
 
         if ($type instanceof SpecialTypeNode) {
-            $node = $type->getAdapterNode();
-            if (!$node instanceof Identifier) {
-                $node = new Identifier($type->type()->value);
-            }
-
-            $node->name = $type->type()->value;
-            $type->setAdapterNode($node);
-
-            return $node;
+            return $this->reuseAdapterNode($type, new Identifier($type->type()->value));
         }
 
         throw new \RuntimeException('Unsupported type node: ' . $type::class);

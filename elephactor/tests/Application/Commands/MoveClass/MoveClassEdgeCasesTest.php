@@ -158,8 +158,7 @@ final class MoveClassEdgeCasesTest extends ElephactorTestCase
 
                 \VirtualTestNamespace\Refactored\Core\TargetClass::create();
 
-                return new class($parameter) extends TargetClass
-                {
+                return new class($parameter) extends TargetClass {
                     public function __construct(private TargetClass $inner)
                     {
                     }

@@ -20,8 +20,6 @@ final class NikicFilePersister implements PhpFilePersister
 
     public function persist(PhpFile $phpFile): void
     {
-        $statements = $this->nodeMapper->buildFile($phpFile->fileNode());
-
         /**
          * @var array<Node> $originalStatements
          */
@@ -29,6 +27,8 @@ final class NikicFilePersister implements PhpFilePersister
             fn (Ast\Node $node) => $node->getAdapterNode(),
             $phpFile->fileNode()->children()->all()
         );
+
+        $statements = $this->nodeMapper->buildFile($phpFile->fileNode());
 
         $originalTokens = $phpFile->fileNode()->originalAdapterTokens();
 

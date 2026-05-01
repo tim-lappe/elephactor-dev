@@ -143,7 +143,7 @@ final class MoveClassDependencyImportTest extends ElephactorTestCase
         $movedFile = $this->findFileIn($targetNamespace, 'MovedApplicationService.php');
         self::assertNotNull($movedFile);
 
-        $this->codeMatches($movedFile->content(), <<<'PHP'
+        self::assertSame(<<<'PHP'
         <?php
 
         namespace VirtualTestNamespace\Printer\Application\Dto;
@@ -159,13 +159,16 @@ final class MoveClassDependencyImportTest extends ElephactorTestCase
             public function __construct(private LabelRepository $labels)
             {
             }
+
             /**
              * @return list<ResponseDto>
              */
-
             public function listLabels(): array
             {
-                return array_map(fn(PrintedLabel $label): ResponseDto => new ResponseDto($label->name()), $this->labels->recent());
+                return array_map(
+                    fn (PrintedLabel $label): ResponseDto => new ResponseDto($label->name()),
+                    $this->labels->recent(),
+                );
             }
 
             public function resend(): void
@@ -177,7 +180,7 @@ final class MoveClassDependencyImportTest extends ElephactorTestCase
                 }
             }
         }
-        PHP);
+        PHP, $movedFile->content());
     }
 
     public function testKeepsReferencesToSameNamespaceDependencies(): void

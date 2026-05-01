@@ -18,6 +18,9 @@ final class FormatPreservingPrettyPrinter extends Standard
 
         $result = '';
         foreach ($nodes as $node) {
+            $extraLeading = WhitespaceAttribute::get($node) ?? 0;
+            $result .= str_repeat($this->newline, $extraLeading);
+
             $comments = $node->getComments();
             if ($comments !== []) {
                 $result .= $this->nl . $this->pComments($comments);
@@ -26,8 +29,7 @@ final class FormatPreservingPrettyPrinter extends Standard
                 }
             }
 
-            $extraLeading = WhitespaceAttribute::get($node) ?? 0;
-            $result .= str_repeat($this->newline, $extraLeading) . $this->nl . $this->p($node);
+            $result .= $this->nl . $this->p($node);
         }
 
         if ($indent) {

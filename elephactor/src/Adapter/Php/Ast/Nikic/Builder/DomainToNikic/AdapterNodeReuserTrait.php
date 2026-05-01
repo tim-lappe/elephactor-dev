@@ -25,6 +25,7 @@ trait AdapterNodeReuserTrait
                 $attributes[$key] = $value;
             }
 
+            $attributes['origNode'] = $adapter;
             $built->setAttributes($attributes);
         }
 

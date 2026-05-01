@@ -17,6 +17,8 @@ use TimLappe\Elephactor\Domain\Php\AST\Model as Ast;
 
 final class ValueMapper
 {
+    use AdapterNodeReuserTrait;
+
     public function __construct(
         private readonly TypeMapper $typeMapper,
         private readonly NodeMapperContext $context,
@@ -71,68 +73,45 @@ final class ValueMapper
 
     private function buildAttributeGroup(Ast\Attribute\AttributeGroupNode $group): AttributeGroup
     {
-        $attributes = array_map(
-            fn (Ast\Attribute\AttributeNode $attribute): Attribute => $this->buildAttribute($attribute),
-            $group->attributes(),
+        return $this->reuseAdapterNode(
+            $group,
+            new AttributeGroup(
+                array_map(
+                    fn (Ast\Attribute\AttributeNode $attribute): Attribute => $this->buildAttribute($attribute),
+                    $group->attributes(),
+                ),
+            ),
         );
-
-        $node = $group->getAdapterNode();
-        if (!$node instanceof AttributeGroup) {
-            $node = new AttributeGroup($attributes);
-        } else {
-            $node->attrs = $attributes;
-        }
-
-        $group->setAdapterNode($node);
-
-        return $node;
     }
 
     private function buildAttribute(Ast\Attribute\AttributeNode $attribute): Attribute
     {
-        $name = $this->buildQualifiedName($attribute->name()->qualifiedName());
-        $args = array_map(
-            fn (Ast\Attribute\AttributeArgumentNode $argument): Arg => $this->buildAttributeArgument($argument),
-            $attribute->arguments(),
+        return $this->reuseAdapterNode(
+            $attribute,
+            new Attribute(
+                $this->buildQualifiedName($attribute->name()->qualifiedName()),
+                array_map(
+                    fn (Ast\Attribute\AttributeArgumentNode $argument): Arg => $this->buildAttributeArgument($argument),
+                    $attribute->arguments(),
+                ),
+            ),
         );
-
-        $node = $attribute->getAdapterNode();
-        if (!$node instanceof Attribute) {
-            $node = new Attribute($name, $args);
-        } else {
-            $node->name = $name;
-            $node->args = $args;
-        }
-
-        $attribute->setAdapterNode($node);
-
-        return $node;
     }
 
     private function buildAttributeArgument(Ast\Attribute\AttributeArgumentNode $argument): Arg
     {
         $expression = $this->context->expressionMapper()->buildExpression($argument->expression());
 
-        $name = $argument->name() !== null ? $this->buildIdentifier($argument->name()->identifier()) : null;
-        $node = $argument->getAdapterNode();
-        if (!$node instanceof Node\Arg) {
-            $node = new Node\Arg(
+        return $this->reuseAdapterNode(
+            $argument,
+            new Node\Arg(
                 $expression,
                 false,
                 false,
                 [],
-                $name,
-            );
-        } else {
-            $node->value = $expression;
-            $node->name = $name;
-            $node->byRef = false;
-            $node->unpack = false;
-        }
-
-        $argument->setAdapterNode($node);
-
-        return $node;
+                $argument->name() !== null ? $this->buildIdentifier($argument->name()->identifier()) : null,
+            ),
+        );
     }
 
     public function buildClassFlags(Ast\Value\ClassModifiers $modifiers): int

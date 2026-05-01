@@ -164,17 +164,19 @@ final class ExpressionMapper
             $flags |= Stmt\Class_::MODIFIER_READONLY;
         }
 
-        /** @var Node\Param $node */
-        $node = $parameter->getAdapterNode();
-        $node->attrGroups = $this->valueMapper->buildAttributeGroups($parameter->attributes());
-        $node->flags = $flags;
-        $node->variadic = $parameter->isVariadic();
-        $node->default = $parameter->defaultValue() !== null ? $this->buildExpression($parameter->defaultValue()) : null;
-        $node->byRef = $parameter->passingMode() === ParameterPassingMode::BY_REFERENCE;
-        $node->type = $this->typeMapper->buildType($parameter->type());
-        $node->var = new Expr\Variable($parameter->name()->value());
-
-        return $this->reuseAdapterNode($parameter, $node);
+        return $this->reuseAdapterNode(
+            $parameter,
+            new Param(
+                new Expr\Variable($parameter->name()->value()),
+                $parameter->defaultValue() !== null ? $this->buildExpression($parameter->defaultValue()) : null,
+                $this->typeMapper->buildType($parameter->type()),
+                $parameter->passingMode() === ParameterPassingMode::BY_REFERENCE,
+                $parameter->isVariadic(),
+                [],
+                $flags,
+                $this->valueMapper->buildAttributeGroups($parameter->attributes()),
+            ),
+        );
     }
 
     /**
