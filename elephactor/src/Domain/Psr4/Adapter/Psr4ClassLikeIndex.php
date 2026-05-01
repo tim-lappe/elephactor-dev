@@ -28,6 +28,10 @@ final class Psr4ClassLikeIndex implements PhpClassLikeIndex
 
         foreach ($namespaceFileMap->items() as $item) {
             foreach ($item->files()->toArray() as $phpFile) {
+                if (!Psr4ClassFile::isClassValidFile($phpFile)) {
+                    continue;
+                }
+
                 $this->phpClassCollection->add(
                     new Psr4ClassFile($phpFile),
                 );

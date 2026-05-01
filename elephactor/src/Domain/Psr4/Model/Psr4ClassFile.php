@@ -23,4 +23,18 @@ final class Psr4ClassFile extends PhpClassLike
 
         parent::__construct($file, $classLikeDeclaration[0]);
     }
+
+    public static function isClassValidFile(PhpFile $file): bool
+    {
+        $classLikeDeclaration = $file->fileNode()->classLikeDeclerations();
+        if (count($classLikeDeclaration) === 0) {
+            return false;
+        }
+
+        if (count($classLikeDeclaration) > 1) {
+            return false;
+        }
+
+        return true;
+    }
 }
