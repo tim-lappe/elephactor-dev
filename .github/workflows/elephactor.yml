@@ -1,5 +1,8 @@
 name: Elephactor CI and dist mirror
 
+env:
+  BOX_VERSION: "4.7.0"
+
 on:
   push:
     branches:
@@ -26,6 +29,14 @@ jobs:
       - run: composer install --no-interaction --prefer-dist
       - run: composer test
       - run: composer phpstan
+
+      - name: Verify PHAR build
+        run: |
+          set -euo pipefail
+          curl -sSL -o box.phar "https://github.com/box-project/box/releases/download/${BOX_VERSION}/box.phar"
+          composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+          php -d phar.readonly=0 box.phar compile
+          ./elephactor.phar --version
 
   vscode:
     runs-on: ubuntu-latest
@@ -57,6 +68,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+
+      - name: Build PHAR
+        working-directory: elephactor
+        run: |
+          set -euo pipefail
+          curl -sSL -o box.phar "https://github.com/box-project/box/releases/download/${BOX_VERSION}/box.phar"
+          composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+          php -d phar.readonly=0 box.phar compile
+          ./elephactor.phar --version
+
       - name: Clone dist repository
         env:
           ELEPHACTOR_DIST_TOKEN: ${{ secrets.ELEPHACTOR_DIST_TOKEN }}
@@ -68,18 +93,15 @@ jobs:
           fi
           git clone --depth 1 "https://x-access-token:${ELEPHACTOR_DIST_TOKEN}@github.com/tim-lappe/elephactor.git" dist-repo
 
-      - name: Rsync package files
+      - name: Publish Composer package (PHAR + bin + composer.json) to dist repo
         run: |
           set -euo pipefail
           find dist-repo -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
-          rsync -av \
-            --exclude 'tests/' \
-            --exclude 'phpunit.xml' \
-            --exclude 'phpstan.neon' \
-            --exclude '.php-cs-fixer.php' \
-            --exclude 'coverage/' \
-            --exclude 'vendor/' \
-            elephactor/ dist-repo/
+          mkdir -p dist-repo/bin
+          install -m0644 elephactor/LICENSE dist-repo/LICENSE
+          install -m0644 elephactor/composer.dist.json dist-repo/composer.json
+          install -m0755 elephactor/elephactor.phar dist-repo/elephactor.phar
+          install -m0755 elephactor/bin/elephactor dist-repo/bin/elephactor
 
       - name: Commit and push
         env:
@@ -94,5 +116,5 @@ jobs:
             echo "No changes to sync."
             exit 0
           fi
-          git commit -m "Sync from tim-lappe/elephactor-dev@${GITHUB_SHA}"
+          git commit -m "Publish elephactor.phar from tim-lappe/elephactor-dev@${GITHUB_SHA}"
           git push "https://x-access-token:${ELEPHACTOR_DIST_TOKEN}@github.com/tim-lappe/elephactor.git" HEAD:main

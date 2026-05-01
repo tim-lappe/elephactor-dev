@@ -1,0 +1,19 @@
+{
+    "$schema": "https://raw.githubusercontent.com/box-project/box/main/res/schema.json",
+    "alias": "elephactor.phar",
+    "banner": false,
+    "compression": "GZ",
+    "directories": ["src"],
+    "files": [
+        "composer.json",
+        "LICENSE"
+    ],
+    "finder": [
+        {
+            "in": "vendor"
+        }
+    ],
+    "main": "bin/elephactor",
+    "output": "elephactor.phar",
+    "git-version": "git"
+}

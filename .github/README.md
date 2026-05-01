@@ -2,7 +2,7 @@
 
 ## Dist mirror secret (`ELEPHACTOR_DIST_TOKEN`)
 
-The workflow [`.github/workflows/elephactor.yml`](workflows/elephactor.yml) pushes the Composer package subtree to [tim-lappe/elephactor](https://github.com/tim-lappe/elephactor) on every successful push to `main` on `tim-lappe/elephactor-dev`.
+The workflow `[.github/workflows/elephactor.yml](workflows/elephactor.yml)` builds `elephactor.phar` (via [Box](https://github.com/box-project/box)) and pushes a valid Composer package to [tim-lappe/elephactor](https://github.com/tim-lappe/elephactor) on every successful push to `main` on `tim-lappe/elephactor-dev`: `composer.json` (from [`elephactor/composer.dist.json`](../elephactor/composer.dist.json)), `bin/elephactor`, `elephactor.phar`, and `LICENSE`. Loose `src/` is not mirrored; the PHAR holds the application code.
 
 Configure a **repository secret** named `ELEPHACTOR_DIST_TOKEN` on **elephactor-dev** with a token that can push to the target repo.
 
