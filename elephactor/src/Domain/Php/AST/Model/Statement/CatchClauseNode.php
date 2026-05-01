@@ -17,7 +17,7 @@ final class CatchClauseNode extends AbstractNode
      */
     public function __construct(
         array $types,
-        private readonly Identifier $variable,
+        private readonly ?Identifier $variable,
         array $statements
     ) {
         if ($types === []) {
@@ -43,7 +43,7 @@ final class CatchClauseNode extends AbstractNode
         return $this->children()->getAllOf('type', TypeNode::class);
     }
 
-    public function variable(): Identifier
+    public function variable(): ?Identifier
     {
         return $this->variable;
     }

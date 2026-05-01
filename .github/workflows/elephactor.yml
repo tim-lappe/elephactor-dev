@@ -28,7 +28,6 @@ jobs:
 
       - run: composer install --no-interaction --prefer-dist
       - run: composer test
-      - run: composer phpstan
 
       - name: Verify PHAR build
         run: |

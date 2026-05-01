@@ -567,15 +567,11 @@ final class StatementMapper
             $catch->types,
         )));
 
-        if ($catch->var === null) {
-            throw new \RuntimeException('Catch variable is required');
-        }
-
         return $this->applyAttributes(
             $catch,
             new Ast\Statement\CatchClauseNode(
                 $types,
-                $this->expressionMapper()->expectSimpleVariable($catch->var),
+                $catch->var !== null ? $this->expressionMapper()->expectSimpleVariable($catch->var) : null,
                 $this->mapStatements($catch->stmts),
             ),
         );

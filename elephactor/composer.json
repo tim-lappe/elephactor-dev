@@ -30,9 +30,16 @@
         "friendsofphp/php-cs-fixer": "^3.20"
     },
     "scripts": {
-        "test": "phpunit",
-        "test:coverage": "phpunit --coverage-text",
-        "phpstan": "phpstan analyse",
+        "test": [
+            "@test:phpstan",
+            "@test:phpunit"
+        ],
+        "test:phpstan": [
+            "phpstan analyse"
+        ],
+        "test:phpunit": [
+            "phpunit"
+        ],
         "fix": "php-cs-fixer fix --config=.php-cs-fixer.php --allow-risky=yes"
     },
     "bin": [

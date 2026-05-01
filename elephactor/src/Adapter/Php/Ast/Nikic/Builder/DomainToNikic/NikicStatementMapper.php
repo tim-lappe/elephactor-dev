@@ -462,11 +462,13 @@ final class NikicStatementMapper implements StatementMapper
             $clause->types(),
         );
 
+        $variable = $clause->variable();
+
         return $this->reuseAdapterNode(
             $clause,
             new Stmt\Catch_(
                 $types,
-                new Expr\Variable($clause->variable()->value()),
+                $variable !== null ? new Expr\Variable($variable->value()) : null,
                 $this->buildStatements($clause->statements()),
             ),
         );
