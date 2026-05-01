@@ -2,13 +2,14 @@ import * as assert from "node:assert";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as vscode from "vscode";
+import { binaryPathConfigurationKey, commandIds } from "../../constants";
 
 suite("Elephactor Extension", () => {
   test("registers install command", async () => {
     const commands = await vscode.commands.getCommands(true);
     assert.ok(
-      commands.includes("vscode-elephactor.installElephactor"),
-      "Command vscode-elephactor.installElephactor is missing",
+      commands.includes(commandIds.installElephactor),
+      `Command ${commandIds.installElephactor} is missing`,
     );
   });
 
@@ -23,8 +24,8 @@ suite("Elephactor Extension", () => {
     };
 
     assert.ok(
-      packageJson.contributes?.configuration?.properties?.["vscode-elephactor.binaryPath"],
-      "Configuration vscode-elephactor.binaryPath is missing",
+      packageJson.contributes?.configuration?.properties?.[binaryPathConfigurationKey],
+      `Configuration ${binaryPathConfigurationKey} is missing`,
     );
   });
 });

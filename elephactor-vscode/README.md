@@ -1,6 +1,8 @@
 # Elephactor VS Code Extension
 
-Elephactor is a starter VS Code extension that registers a single `Elephactor: Hello World` command. Use it as the base for experimenting with editor automations or future Elephactor tooling.
+Elephactor keeps PHP class moves and renames in sync with the Elephactor CLI. When a PHP file is renamed or moved in VS Code, the extension asks the CLI to update class declarations and references while skipping the physical file operation that VS Code already performed.
+
+The extension also contributes the `Elephactor: Install Elephactor` command, which installs `tim-lappe/elephactor` into the nearest Composer project.
 
 ## Getting started
 
@@ -18,7 +20,7 @@ Elephactor is a starter VS Code extension that registers a single `Elephactor: H
    npm run watch
    ```
 
-3. Press `F5` in VS Code to launch an Extension Development Host, then run the `Elephactor: Hello World` command from the Command Palette.
+3. Press `F5` in VS Code to launch an Extension Development Host, then move or rename a PHP class file in a Composer project.
 
 ## Available scripts
 
@@ -30,14 +32,16 @@ Elephactor is a starter VS Code extension that registers a single `Elephactor: H
 
 ## Extension structure
 
-- `src/extension.ts`: activation entry point and command registration.
+- `src/extension.ts`: activation entry point and disposable registration.
+- `src/installCommand.ts`: `Elephactor: Install Elephactor` command.
+- `src/phpFileRename.ts`: PHP file move and rename orchestration.
+- `src/composerProject.ts`: Composer project root discovery.
+- `src/elephactorCli.ts`: Elephactor binary resolution and CLI execution.
 - `.vscode/`: launch and task configs for debugging and building.
 - `.vscodeignore`: excludes dev-only files from packaged artifacts.
 - `vsc-extension-quickstart.md`: handy reminders for extension development.
 
 ## Next steps
 
-- Add new commands in `package.json` under `contributes.commands`.
-- Use the VS Code API through the `vscode` module to interact with the editor.
 - Expand the test suite by adding files in `src/test` and running `npm run test`.
 
