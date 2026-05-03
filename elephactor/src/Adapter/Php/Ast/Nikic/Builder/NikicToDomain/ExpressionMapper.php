@@ -461,6 +461,7 @@ final class ExpressionMapper
             Expr\BinaryOp\SmallerOrEqual::class => Ast\Value\BinaryOperator::SMALLER_EQUAL,
             Expr\BinaryOp\Spaceship::class => Ast\Value\BinaryOperator::SPACESHIP,
             Expr\BinaryOp\Coalesce::class => Ast\Value\BinaryOperator::COALESCE,
+            Expr\BinaryOp\Pipe::class => Ast\Value\BinaryOperator::PIPE,
             default => throw new \RuntimeException('Unsupported binary operator'),
         };
     }
@@ -745,6 +746,7 @@ final class ExpressionMapper
             Expr\Cast\String_::class => Ast\Value\CastType::STRING,
             Expr\Cast\Object_::class => Ast\Value\CastType::OBJECT,
             Expr\Cast\Unset_::class => Ast\Value\CastType::UNSET,
+            Expr\Cast\Void_::class => Ast\Value\CastType::VOID,
             default => throw new \RuntimeException('Unsupported cast type'),
         };
 
@@ -765,25 +767,17 @@ final class ExpressionMapper
             $mapped = new Ast\Expression\LiteralExpressionNode(
                 Ast\Value\LiteralValue::integer($scalar->value),
             );
-        }
-
-        if ($scalar instanceof Node\Scalar\DNumber) {
+        } elseif ($scalar instanceof Node\Scalar\DNumber) {
             $mapped = new Ast\Expression\LiteralExpressionNode(
                 Ast\Value\LiteralValue::float($scalar->value),
             );
-        }
-
-        if ($scalar instanceof Node\Scalar\String_) {
+        } elseif ($scalar instanceof Node\Scalar\String_) {
             $mapped = new Ast\Expression\LiteralExpressionNode(
                 Ast\Value\LiteralValue::string($scalar->value),
             );
-        }
-
-        if ($scalar instanceof Node\Scalar\Encapsed) {
+        } elseif ($scalar instanceof Node\Scalar\Encapsed) {
             return $this->mapEncapsedStringExpression($scalar);
-        }
-
-        if ($scalar instanceof Node\Scalar\MagicConst) {
+        } elseif ($scalar instanceof Node\Scalar\MagicConst) {
             $mapped = new Ast\Expression\ConstantFetchExpressionNode(
                 new Ast\Value\QualifiedName([new Ast\Value\Identifier($scalar->getName())]),
             );
@@ -886,9 +880,12 @@ final class ExpressionMapper
             if ($argument instanceof Node\Arg) {
                 $result[] = $this->mapArgument($argument);
             } elseif ($argument instanceof Node\VariadicPlaceholder) {
-                // Handle variadic placeholder - this might need special handling
-                // For now, skip it or handle as a special argument
-                continue;
+                $result[] = $this->applyAttributes(
+                    $argument,
+                    new Ast\Argument\ArgumentNode(
+                        new Ast\Expression\VariadicPlaceholderExpressionNode(),
+                    ),
+                );
             }
         }
         return $result;

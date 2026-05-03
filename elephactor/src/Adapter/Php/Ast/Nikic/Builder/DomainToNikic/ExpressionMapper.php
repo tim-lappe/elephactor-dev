@@ -120,23 +120,32 @@ final class ExpressionMapper
     }
 
     /**
-     * @param  list<ArgumentNode> $arguments
-     * @return list<Arg>
+     * @param  list<ArgumentNode>                     $arguments
+     * @return list<Arg|Node\VariadicPlaceholder>
      */
     public function buildArguments(array $arguments): array
     {
         return array_map(
-            fn (ArgumentNode $argument): Arg => $this->reuseAdapterNode(
-                $argument,
-                new Arg(
-                    $this->buildExpression($argument->expression()),
-                    false,
-                    $argument->isUnpacked(),
-                    [],
-                    $argument->name() !== null ? $this->valueMapper->buildIdentifier($argument->name()->identifier()) : null,
-                ),
-            ),
+            fn (ArgumentNode $argument): Arg|Node\VariadicPlaceholder => $this->buildArgument($argument),
             $arguments,
+        );
+    }
+
+    private function buildArgument(ArgumentNode $argument): Arg|Node\VariadicPlaceholder
+    {
+        if ($argument->expression() instanceof Ast\Expression\VariadicPlaceholderExpressionNode) {
+            return $this->reuseAdapterNode($argument, new Node\VariadicPlaceholder());
+        }
+
+        return $this->reuseAdapterNode(
+            $argument,
+            new Arg(
+                $this->buildExpression($argument->expression()),
+                false,
+                $argument->isUnpacked(),
+                [],
+                $argument->name() !== null ? $this->valueMapper->buildIdentifier($argument->name()->identifier()) : null,
+            ),
         );
     }
 
@@ -589,6 +598,7 @@ final class ExpressionMapper
             BinaryOperator::SMALLER_EQUAL => new BinaryOp\SmallerOrEqual($left, $right),
             BinaryOperator::SPACESHIP => new BinaryOp\Spaceship($left, $right),
             BinaryOperator::COALESCE => new Expr\BinaryOp\Coalesce($left, $right),
+            BinaryOperator::PIPE => new Expr\BinaryOp\Pipe($left, $right),
             BinaryOperator::AND => new Expr\BinaryOp\LogicalAnd($left, $right),
             BinaryOperator::OR => new Expr\BinaryOp\LogicalOr($left, $right),
         };
@@ -668,6 +678,7 @@ final class ExpressionMapper
             Ast\Value\CastType::STRING => new Expr\Cast\String_($expr),
             Ast\Value\CastType::OBJECT => new Expr\Cast\Object_($expr),
             Ast\Value\CastType::UNSET => new Expr\Cast\Unset_($expr),
+            Ast\Value\CastType::VOID => new Expr\Cast\Void_($expr),
         };
     }
 

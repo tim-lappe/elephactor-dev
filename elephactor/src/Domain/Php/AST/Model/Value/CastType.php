@@ -13,4 +13,5 @@ enum CastType: string
     case STRING = 'string';
     case OBJECT = 'object';
     case UNSET = 'unset';
+    case VOID = 'void';
 }

@@ -31,6 +31,7 @@ enum BinaryOperator: string
     case SMALLER_EQUAL = '<=';
     case SPACESHIP = '<=>';
     case COALESCE = '??';
+    case PIPE = '|>';
     case AND = 'and';
     case OR = 'or';
 }

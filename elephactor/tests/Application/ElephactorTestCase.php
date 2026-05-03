@@ -30,7 +30,7 @@ abstract class ElephactorTestCase extends TestCase
 
         $this->workspace = new Workspace(
             $workDir,
-            new Environment(PhpVersion::fromString('8.3')),
+            new Environment($this->phpVersion()),
         );
 
         $this->sourceDirectory = $workDir->createOrGetDirecotry('src');
@@ -53,6 +53,11 @@ abstract class ElephactorTestCase extends TestCase
     protected function codeMatches(string $code, string $expectedCode): void
     {
         self::assertEquals($this->normalizeCode($expectedCode), $this->normalizeCode($code));
+    }
+
+    protected function phpVersion(): PhpVersion
+    {
+        return PhpVersion::fromString('8.3');
     }
 
     private function normalizeCode(string $code): string
