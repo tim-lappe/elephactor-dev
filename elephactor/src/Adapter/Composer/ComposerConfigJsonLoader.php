@@ -77,20 +77,63 @@ final class ComposerConfigJsonLoader
     {
         $psr4AutoloadMap = new Psr4AutoloadMap();
         foreach ($psr4Autoload as $namespace => $path) {
-            if (!is_string($namespace) || !is_string($path)) {
-                throw new \InvalidArgumentException('Invalid namespace or path in composer.json');
+            if (!is_string($namespace)) {
+                continue;
             }
 
-            if (!is_dir($path)) {
-                $path = $composerJsonFile->directory()->absolutePath() . '/' . $path;
-                if (!is_dir($path)) {
-                    throw new \InvalidArgumentException(sprintf('Path %s does not exist', $path));
+            foreach ($this->normalizeAutoloadPaths($path) as $autoloadPath) {
+                $autoloadPath = $this->resolveAutoloadPath($autoloadPath, $composerJsonFile);
+                if ($autoloadPath === null) {
+                    continue;
                 }
-            }
 
-            $psr4AutoloadMap->add(QualifiedName::fromString($namespace), new FsDirectory(new FsAbsolutePath($path)));
+                $psr4AutoloadMap->add(QualifiedName::fromString($namespace), new FsDirectory(new FsAbsolutePath($autoloadPath)));
+            }
         }
 
         return new Autoload($psr4AutoloadMap);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function normalizeAutoloadPaths(mixed $path): array
+    {
+        if (is_string($path)) {
+            return [$path];
+        }
+
+        if (!is_array($path)) {
+            return [];
+        }
+
+        $paths = [];
+        foreach ($path as $autoloadPath) {
+            if (!is_string($autoloadPath)) {
+                continue;
+            }
+
+            $paths[] = $autoloadPath;
+        }
+
+        return $paths;
+    }
+
+    private function resolveAutoloadPath(string $path, FsFile $composerJsonFile): ?string
+    {
+        if (!$this->isAbsolutePath($path)) {
+            $path = $composerJsonFile->directory()->absolutePath() . '/' . $path;
+        }
+
+        if (!is_dir($path)) {
+            return null;
+        }
+
+        return $path;
+    }
+
+    private function isAbsolutePath(string $path): bool
+    {
+        return str_starts_with($path, '/') || preg_match('/^[A-Za-z]:[\/\\\\]/', $path) === 1;
     }
 }

@@ -2,7 +2,8 @@ import * as assert from "node:assert";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as vscode from "vscode";
-import { binaryPathConfigurationKey, commandIds } from "../../constants";
+import { binaryPathConfigurationKey, commandIds, elephactorComposerPackage } from "../../constants";
+import { composerInstallCommand } from "../../installCommand";
 
 suite("Elephactor Extension", () => {
   test("registers install command", async () => {
@@ -26,6 +27,17 @@ suite("Elephactor Extension", () => {
     assert.ok(
       packageJson.contributes?.configuration?.properties?.[binaryPathConfigurationKey],
       `Configuration ${binaryPathConfigurationKey} is missing`,
+    );
+  });
+
+  test("builds Composer commands for both install targets", () => {
+    assert.strictEqual(
+      composerInstallCommand("global"),
+      `composer global require ${elephactorComposerPackage}:@dev`,
+    );
+    assert.strictEqual(
+      composerInstallCommand("project"),
+      `composer require --dev ${elephactorComposerPackage}`,
     );
   });
 });

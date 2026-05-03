@@ -2,7 +2,7 @@
 
 Elephactor keeps PHP class moves and renames in sync with the Elephactor CLI. When a PHP file is renamed or moved in VS Code, the extension asks the CLI to update class declarations and references while skipping the physical file operation that VS Code already performed.
 
-The extension also contributes the `Elephactor: Install Elephactor` command, which installs `tim-lappe/elephactor` into the nearest Composer project.
+The extension also contributes the `Elephactor: Install Elephactor` command, which can install `tim-lappe/elephactor` globally or into the nearest Composer project.
 
 ## Getting started
 
@@ -22,6 +22,15 @@ The extension also contributes the `Elephactor: Install Elephactor` command, whi
 
 3. Press `F5` in VS Code to launch an Extension Development Host, then move or rename a PHP class file in a Composer project.
 
+## Installing Elephactor
+
+Run `Elephactor: Install Elephactor` from the command palette and choose one of the install modes:
+
+- `Install globally` runs `composer global require tim-lappe/elephactor:@dev`. This makes the `elephactor` command available without adding a dependency to each project.
+- `Install as project dev dependency` runs `composer require --dev tim-lappe/elephactor` in the nearest Composer project.
+
+For global installs, the extension first tries `elephactor` from VS Code's `PATH`. If that is not available, it asks Composer for the global bin directory and runs Elephactor from there.
+
 ## Available scripts
 
 - `npm run compile` compiles the TypeScript sources into `dist`.
@@ -33,7 +42,7 @@ The extension also contributes the `Elephactor: Install Elephactor` command, whi
 ## Extension structure
 
 - `src/extension.ts`: activation entry point and disposable registration.
-- `src/installCommand.ts`: `Elephactor: Install Elephactor` command.
+- `src/installCommand.ts`: `Elephactor: Install Elephactor` command and install-mode selection.
 - `src/phpFileRename.ts`: PHP file move and rename orchestration.
 - `src/composerProject.ts`: Composer project root discovery.
 - `src/elephactorCli.ts`: Elephactor binary resolution and CLI execution.
