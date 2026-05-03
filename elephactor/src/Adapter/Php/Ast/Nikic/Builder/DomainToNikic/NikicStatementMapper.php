@@ -117,7 +117,7 @@ final class NikicStatementMapper implements StatementMapper
     private function buildUseStatement(Ast\Statement\UseStatementNode $statement): array
     {
         $items = array_map(
-            fn (UseClauseNode $clause): Node\UseItem => $this->buildUseClause($clause, $this->valueMapper->buildUseType($statement->useKind())),
+            fn (UseClauseNode $clause): Node\UseItem => $this->buildUseClause($clause),
             $statement->clauses(),
         );
 
@@ -139,17 +139,14 @@ final class NikicStatementMapper implements StatementMapper
         ];
     }
 
-    /**
-     * @param int<1, 3> $type
-     */
-    private function buildUseClause(UseClauseNode $clause, int $type): Node\UseItem
+    private function buildUseClause(UseClauseNode $clause): Node\UseItem
     {
         return $this->reuseAdapterNode(
             $clause,
             new Node\UseItem(
                 $this->valueMapper->buildQualifiedName($clause->name()->qualifiedName()),
                 $clause->alias() !== null ? $this->valueMapper->buildIdentifier($clause->alias()->identifier()) : null,
-                $type,
+                Stmt\Use_::TYPE_UNKNOWN,
             ),
         );
     }

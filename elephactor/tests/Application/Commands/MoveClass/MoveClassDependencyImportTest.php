@@ -105,6 +105,7 @@ final class MoveClassDependencyImportTest extends ElephactorTestCase
         use VirtualTestNamespace\Printer\Domain\Entity\PrintedLabel;
         use VirtualTestNamespace\Printer\Domain\Exception\JobFailedException;
         use VirtualTestNamespace\Printer\Domain\Repository\LabelRepository;
+        use function array_map;
 
         final readonly class MovedApplicationService
         {
@@ -153,6 +154,7 @@ final class MoveClassDependencyImportTest extends ElephactorTestCase
         use VirtualTestNamespace\Printer\Domain\Entity\PrintedLabel;
         use VirtualTestNamespace\Printer\Domain\Exception\JobFailedException;
         use VirtualTestNamespace\Printer\Domain\Repository\LabelRepository;
+        use function array_map;
 
         final readonly class MovedApplicationService
         {
