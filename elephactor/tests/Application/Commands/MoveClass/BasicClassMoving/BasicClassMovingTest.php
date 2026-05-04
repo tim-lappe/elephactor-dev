@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TimLappe\ElephactorTests\Application\Commands\MoveClass;
+namespace TimLappe\ElephactorTests\Application\Commands\MoveClass\BasicClassMoving;
 
 use TimLappe\Elephactor\Domain\Php\Index\ClassIndex\Criteria\ClassNameCriteria;
 use TimLappe\Elephactor\Domain\Php\Refactoring\Commands\MoveFile;

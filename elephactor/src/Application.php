@@ -32,7 +32,7 @@ class Application extends BaseApplication
 
     public function __construct(?Workspace $workspace = null)
     {
-        parent::__construct('Elephactor', '1.0.0');
+        parent::__construct('Elephactor', self::readVersionFromComposer());
 
         $this->workspace = $workspace ?? $this->setupWorkspace();
 
@@ -49,6 +49,24 @@ class Application extends BaseApplication
         ]);
 
         $this->setupCommands();
+    }
+
+    private static function readVersionFromComposer(): string
+    {
+        $composerPath = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'composer.json';
+        if (!is_readable($composerPath)) {
+            return '0.1.0';
+        }
+        try {
+            $data = json_decode((string) file_get_contents($composerPath), true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return '0.1.0';
+        }
+        if (!\is_array($data) || !isset($data['version']) || !\is_string($data['version']) || $data['version'] === '') {
+            return '0.1.0';
+        }
+
+        return $data['version'];
     }
 
     private function setupWorkspace(): Workspace

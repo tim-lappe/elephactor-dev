@@ -9,10 +9,30 @@ on:
       - main
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
 jobs:
+  resolve-version:
+    runs-on: ubuntu-latest
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.repository == 'tim-lappe/elephactor-dev' &&
+      github.event_name == 'push'
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: bump
+        env:
+          ELEPHACTOR_DIST_TOKEN: ${{ secrets.ELEPHACTOR_DIST_TOKEN }}
+        run: bash scripts/next-dist-release-version.sh
+
   php:
     runs-on: ubuntu-latest
     defaults:
@@ -51,6 +71,10 @@ jobs:
           cache: npm
           cache-dependency-path: elephactor-vscode/package-lock.json
 
+      - name: Align extension version with elephactor/composer.json
+        working-directory: ${{ github.workspace }}
+        run: bash scripts/sync-elephactor-vscode-version.sh
+
       - run: npm ci
 
       - run: npm run check
@@ -62,6 +86,7 @@ jobs:
     needs:
       - php
       - vscode
+      - resolve-version
     runs-on: ubuntu-latest
     if: >-
       github.ref == 'refs/heads/main' &&
@@ -69,6 +94,17 @@ jobs:
       github.event_name == 'push'
     steps:
       - uses: actions/checkout@v4
+
+      - name: Apply release version to Composer manifests
+        env:
+          RELEASE_VERSION: ${{ needs.resolve-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${RELEASE_VERSION}" ]]; then
+            echo "resolve-version did not produce a version output."
+            exit 1
+          fi
+          bash scripts/apply-elephactor-release-version.sh "${RELEASE_VERSION}"
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -108,8 +144,14 @@ jobs:
       - name: Commit and push
         env:
           ELEPHACTOR_DIST_TOKEN: ${{ secrets.ELEPHACTOR_DIST_TOKEN }}
+          VERSION: ${{ needs.resolve-version.outputs.version }}
         run: |
           set -euo pipefail
+          if [[ -z "${VERSION}" ]]; then
+            echo "Missing release version."
+            exit 1
+          fi
+          DIST_REMOTE="https://x-access-token:${ELEPHACTOR_DIST_TOKEN}@github.com/tim-lappe/elephactor.git"
           cd dist-repo
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -118,13 +160,20 @@ jobs:
             echo "No changes to sync."
             exit 0
           fi
-          git commit -m "Publish elephactor.phar from tim-lappe/elephactor-dev@${GITHUB_SHA}"
-          git push "https://x-access-token:${ELEPHACTOR_DIST_TOKEN}@github.com/tim-lappe/elephactor.git" HEAD:main
+          git commit -m "Publish elephactor.phar v${VERSION} from tim-lappe/elephactor-dev@${GITHUB_SHA}"
+          git push "${DIST_REMOTE}" HEAD:main
+          if git ls-remote --tags "${DIST_REMOTE}" "refs/tags/v${VERSION}" | grep -q .; then
+            echo "Tag v${VERSION} already exists on dist remote."
+          else
+            git tag -a "v${VERSION}" -m "Release v${VERSION} (source tim-lappe/elephactor-dev@${GITHUB_SHA})"
+            git push "${DIST_REMOTE}" "refs/tags/v${VERSION}"
+          fi
 
   sync-vscode:
     needs:
       - php
       - vscode
+      - resolve-version
     runs-on: ubuntu-latest
     if: >-
       github.ref == 'refs/heads/main' &&
@@ -136,11 +185,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Apply release version to Composer manifests
+        working-directory: ${{ github.workspace }}
+        env:
+          RELEASE_VERSION: ${{ needs.resolve-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${RELEASE_VERSION}" ]]; then
+            echo "resolve-version did not produce a version output."
+            exit 1
+          fi
+          bash scripts/apply-elephactor-release-version.sh "${RELEASE_VERSION}"
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: npm
           cache-dependency-path: elephactor-vscode/package-lock.json
+
+      - name: Align extension version with elephactor/composer.json
+        working-directory: ${{ github.workspace }}
+        run: bash scripts/sync-elephactor-vscode-version.sh
 
       - run: npm ci
 
@@ -175,8 +240,14 @@ jobs:
       - name: Commit and push VS Code dist
         env:
           ELEPHACTOR_DIST_TOKEN: ${{ secrets.ELEPHACTOR_DIST_TOKEN }}
+          VERSION: ${{ needs.resolve-version.outputs.version }}
         run: |
           set -euo pipefail
+          if [[ -z "${VERSION}" ]]; then
+            echo "Missing release version."
+            exit 1
+          fi
+          VSCODE_DIST_REMOTE="https://x-access-token:${ELEPHACTOR_DIST_TOKEN}@github.com/tim-lappe/elephactor-vscode.git"
           cd ../vscode-dist-repo
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -185,5 +256,11 @@ jobs:
             echo "No changes to sync."
             exit 0
           fi
-          git commit -m "Publish elephactor-vscode from tim-lappe/elephactor-dev@${GITHUB_SHA}"
-          git push "https://x-access-token:${ELEPHACTOR_DIST_TOKEN}@github.com/tim-lappe/elephactor-vscode.git" HEAD:main
+          git commit -m "Publish elephactor-vscode v${VERSION} from tim-lappe/elephactor-dev@${GITHUB_SHA}"
+          git push "${VSCODE_DIST_REMOTE}" HEAD:main
+          if git ls-remote --tags "${VSCODE_DIST_REMOTE}" "refs/tags/v${VERSION}" | grep -q .; then
+            echo "Tag v${VERSION} already exists on dist remote."
+          else
+            git tag -a "v${VERSION}" -m "Release v${VERSION} (source tim-lappe/elephactor-dev@${GITHUB_SHA})"
+            git push "${VSCODE_DIST_REMOTE}" "refs/tags/v${VERSION}"
+          fi
