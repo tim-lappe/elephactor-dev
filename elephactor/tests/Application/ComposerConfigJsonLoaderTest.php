@@ -27,8 +27,8 @@ final class ComposerConfigJsonLoaderTest extends TestCase
         $this->createComposerProject([
             'autoload' => [
                 'psr-4' => [
-                    'Fewo\\' => 'src/',
-                    'Fewo\\Email\\' => ['email/php/src/', 'email/php/generated/'],
+                    'Test\\' => 'src/',
+                    'Test\\Email\\' => ['email/php/src/', 'email/php/generated/'],
                 ],
             ],
         ]);
@@ -40,9 +40,9 @@ final class ComposerConfigJsonLoaderTest extends TestCase
         self::assertNotNull($autoloadMap);
         self::assertSame(
             [
-                ['Fewo', $this->projectDirectory . '/src'],
-                ['Fewo\Email', $this->projectDirectory . '/email/php/src'],
-                ['Fewo\Email', $this->projectDirectory . '/email/php/generated'],
+                ['Test', $this->projectDirectory . '/src'],
+                ['Test\Email', $this->projectDirectory . '/email/php/src'],
+                ['Test\Email', $this->projectDirectory . '/email/php/generated'],
             ],
             array_map(
                 static fn (Psr4AutoloadMapItem $item): array => [
@@ -59,13 +59,13 @@ final class ComposerConfigJsonLoaderTest extends TestCase
         $this->createComposerProject([
             'autoload' => [
                 'psr-4' => [
-                    'Fewo\\' => 'src/',
+                    'Test\\' => 'src/',
                 ],
             ],
             'autoload-dev' => [
                 'psr-4' => [
-                    'Fewo\\Tests\\' => 'tests/',
-                    'Fewo\\PhpStan\\' => 'tools/phpstan/',
+                    'Test\\Tests\\' => 'tests/',
+                    'Test\\PhpStan\\' => 'tools/phpstan/',
                 ],
             ],
         ], [
@@ -78,7 +78,7 @@ final class ComposerConfigJsonLoaderTest extends TestCase
 
         self::assertSame(
             [
-                ['Fewo\Tests', $this->projectDirectory . '/tests'],
+                ['Test\Tests', $this->projectDirectory . '/tests'],
             ],
             array_map(
                 static fn (Psr4AutoloadMapItem $item): array => [

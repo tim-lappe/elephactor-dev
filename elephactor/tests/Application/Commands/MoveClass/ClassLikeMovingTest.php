@@ -9,9 +9,8 @@ use TimLappe\Elephactor\Domain\Psr4\Model\Psr4ClassFile;
 use TimLappe\Elephactor\Domain\Php\Refactoring\Commands\MoveFile;
 use TimLappe\ElephactorTests\Application\ElephactorTestCase;
 use TimLappe\ElephactorTests\Application\VirtualDirectory;
-use TimLappe\ElephactorTests\Application\VirtualFile;
-use TimLappe\Elephactor\Domain\Php\AST\Model\Value\Identifier;
 use TimLappe\Elephactor\Domain\Workspace\Model\Filesystem\File;
+use TimLappe\Elephactor\Domain\Php\AST\Model\Value\Identifier;
 
 final class ClassLikeMovingTest extends ElephactorTestCase
 {
@@ -152,6 +151,6 @@ final class ClassLikeMovingTest extends ElephactorTestCase
     {
         return $directory
             ->childFiles()
-            ->first(static fn (VirtualFile $file): bool => $file->name() === $fileName);
+            ->first(static fn (File $file): bool => $file->name() === $fileName);
     }
 }

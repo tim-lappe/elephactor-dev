@@ -5,6 +5,8 @@ parameters:
         - tests
     excludePaths:
         - vendor/*
+        - tests/**/fixtures/*
+        - tests/**/expected/*
 
 includes:
     - vendor/phpstan/phpstan-strict-rules/rules.neon

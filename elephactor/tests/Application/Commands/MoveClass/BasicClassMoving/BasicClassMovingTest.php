@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace TimLappe\ElephactorTests\Application\Commands\MoveClass\BasicClassMoving;
 
+use TimLappe\Elephactor\Domain\Php\AST\Model\Value\Identifier;
 use TimLappe\Elephactor\Domain\Php\Index\ClassIndex\Criteria\ClassNameCriteria;
 use TimLappe\Elephactor\Domain\Php\Refactoring\Commands\MoveFile;
+use TimLappe\Elephactor\Domain\Psr4\Model\Psr4ClassFile;
+use TimLappe\Elephactor\Domain\Workspace\Model\Filesystem\File;
 use TimLappe\ElephactorTests\Application\ElephactorTestCase;
 use TimLappe\ElephactorTests\Application\VirtualDirectory;
-use TimLappe\ElephactorTests\Application\VirtualFile;
-use TimLappe\Elephactor\Domain\Php\AST\Model\Value\Identifier;
-use TimLappe\Elephactor\Domain\Psr4\Model\Psr4ClassFile;
 
 final class BasicClassMovingTest extends ElephactorTestCase
 {
@@ -20,17 +20,7 @@ final class BasicClassMovingTest extends ElephactorTestCase
     {
         parent::setUp();
 
-        $sourceNamespace = $this->sourceDirectory->createOrGetDirecotry('TestNamespace');
-        $sourceNamespace->createFile('FooClass.php', <<<'PHP'
-        <?php
-
-        namespace VirtualTestNamespace\TestNamespace;
-
-        class FooClass
-        {
-        }
-        PHP);
-
+        $this->mountFixtureTree(__DIR__ . '/fixtures');
         $this->targetDirectory = $this->sourceDirectory->createOrGetDirecotry('NewDirectory');
 
         $this->workspace->reloadIndices();
@@ -53,19 +43,14 @@ final class BasicClassMovingTest extends ElephactorTestCase
 
         $movedFile = $this->targetDirectory
             ->childFiles()
-            ->first(fn (VirtualFile $file): bool => $file->name() === 'FooClass.php');
+            ->first(fn (File $file): bool => $file->name() === 'FooClass.php');
 
         self::assertNotNull($movedFile, 'Moved file not found in target directory');
 
-        $this->codeMatches($movedFile->content(), <<<'PHP'
-        <?php
-
-        namespace VirtualTestNamespace\NewDirectory;
-
-        class FooClass
-        {
-        }
-        PHP);
+        $this->assertVirtualFileMatchesExpectedPath(
+            $movedFile,
+            __DIR__ . '/expected/NewDirectory/FooClass.php',
+        );
     }
 
     public function testCanSkipFileMove(): void
@@ -85,17 +70,12 @@ final class BasicClassMovingTest extends ElephactorTestCase
 
         $movedFile = $this->targetDirectory
             ->childFiles()
-            ->first(fn (VirtualFile $file): bool => $file->name() === 'FooClass.php');
+            ->first(fn (File $file): bool => $file->name() === 'FooClass.php');
 
         self::assertNull($movedFile, 'File should not be moved to target directory');
-        $this->codeMatches($class->file()->handle()->content(), <<<'PHP'
-        <?php
-
-        namespace VirtualTestNamespace\NewDirectory;
-
-        class FooClass
-        {
-        }
-        PHP);
+        $this->assertVirtualFileMatchesExpectedPath(
+            $class->file()->handle(),
+            __DIR__ . '/expected/NewDirectory/FooClass.php',
+        );
     }
 }

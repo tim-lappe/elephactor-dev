@@ -16,6 +16,7 @@ use TimLappe\Elephactor\Domain\Php\Repository\PhpFileRepository;
 use TimLappe\Elephactor\Domain\Psr4\Adapter\Index\Psr4PhpFileIndex;
 use TimLappe\Elephactor\Domain\Psr4\Adapter\Psr4ClassLikeIndex;
 use TimLappe\Elephactor\Domain\Psr4\Model\Psr4AutoloadMap;
+use TimLappe\Elephactor\Domain\Workspace\Model\Filesystem\File;
 use TimLappe\Elephactor\Domain\Workspace\Model\Workspace;
 
 abstract class ElephactorTestCase extends TestCase
@@ -53,6 +54,45 @@ abstract class ElephactorTestCase extends TestCase
     protected function codeMatches(string $code, string $expectedCode): void
     {
         self::assertEquals($this->normalizeCode($expectedCode), $this->normalizeCode($code));
+    }
+
+    protected function mountFixtureTree(string $absoluteFixtureRootPath): void
+    {
+        VirtualWorkspaceFixtureLoader::mirrorOnto(
+            $this->sourceDirectory,
+            $absoluteFixtureRootPath,
+        );
+    }
+
+    protected function assertVirtualFileMatchesExpectedPath(File $file, string $absoluteExpectedFilePath): void
+    {
+        self::assertFileExists($absoluteExpectedFilePath);
+        $expected = file_get_contents($absoluteExpectedFilePath);
+        self::assertNotFalse($expected, sprintf('Could not read expected file: %s', $absoluteExpectedFilePath));
+        $this->codeMatches($file->content(), $expected);
+    }
+
+    protected function virtualFileUnderSource(string ...$pathSegments): File
+    {
+        if ($pathSegments === []) {
+            throw new \InvalidArgumentException('At least the file name is required.');
+        }
+
+        $fileName = array_pop($pathSegments);
+        $directory = $this->sourceDirectory;
+        foreach ($pathSegments as $segment) {
+            $directory = $directory->createOrGetDirecotry($segment);
+        }
+
+        $file = $directory
+            ->childFiles()
+            ->first(static fn (File $candidate): bool => $candidate->name() === $fileName);
+
+        if ($file === null) {
+            self::fail(sprintf('Virtual file %s not found under source directory.', $fileName));
+        }
+
+        return $file;
     }
 
     protected function phpVersion(): PhpVersion
